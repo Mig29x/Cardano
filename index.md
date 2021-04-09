@@ -1,34 +1,82 @@
-## Welcome to GitHub Pages
+Esto me funcionó instalando el plutus 
 
-You can use the [editor on GitHub](https://github.com/Mig29x/Cardano/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+1 - Install Nix
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+[$] sh <(curl -L https://nixos.org/nix/install) --darwin-use-unencrypted-nix-store-volume
+2 - Close terminal & reopen (to make sure that all environment variables are set)
 
-### Markdown
+Ojo que el shell nunca me agarró inmediatamente el Nix así que hay que ejecutar el  /Users/<usuario>/.nix-profile/etc/profile.d/nix.sh
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+3 - Check Nix installation / version with
 
-```markdown
-Syntax highlighted code block
+[$] nix --version
+4 - Edit the /etc/nix/nix.conf file
 
-# Header 1
-## Header 2
-### Header 3
+[$] nano /etc/nix/nix.conf
+5 - Add these lines to the file:
 
-- Bulleted
-- List
+substituters        = https://hydra.iohk.io https://iohk.cachix.org https://cache.nixos.org/
+trusted-public-keys = hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ= iohk.cachix.org-1:DpRUyj7h7V830dp/i6Nti+NEO2/nhblbov/8MW7Rqoo= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+Note: These lines are there to avoid very long build times
 
-1. Numbered
-2. List
+Note 2: if the file /etc/nix/nix.conf doesn't exist: create it. ([$] mkdir /etc/nix for the directory and [$] touch /etc/nix/nix.conf for the file)
 
-**Bold** and _Italic_ and `Code` text
+Pueden chequear que el nix tenga los settings correctos con nix show-config
 
-[Link](url) and ![Image](src)
-```
+6 - Restart your computer
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+7 - Now to install, clone the git repo first
 
-### Jekyll Themes
+[$] git clone https://github.com/input-output-hk/plutus.git
+8 - All the following builds should be executed while in the plutus directory
+
+[$] cd plutus
+9 - Build the Plutus Core (This may take some time :) be patient)
+
+[$] nix build -f default.nix plutus.haskell.packages.plutus-core.components.library
+Note:
+
+On MacOS BigSur some users have reported that the building failed with an error like:
+
+error: while setting up the build environment: getting attributes of path '/usr/lib/libSystem.B.dylib': No such file or directory
+To resolve this, we will change the nix build to an unstable (read: newer) build of nixpkgs.
+
+[$] sudo nix-channel --add https://nixos.org/channels/nixpkgs-unstable unstable
+10 - Build the Plutus Playground Client / Server
+
+[$] nix-build -A plutus-playground.client
+[$] nix-build -A plutus-playground.server
+11 - Build other plutus dependencies
+
+[$] nix-build -A plutus-playground.generate-purescript
+[$] nix-build -A plutus-playground.start-backend
+[$] nix-build -A plutus-pab
+12 - Go into nix-shell
+
+[$] nix-shell
+13 - inside of the nix-shell
+
+[$] cd plutus-pab
+[$] plutus-pab-generate-purs
+[$] cd ../plutus-playground-server
+[$] plutus-playground-generate-purs
+14 - start the playground server
+
+[$] plutus-playground-server
+
+
+Great! All set.
+
+
+
+15 - Now in a new terminal window:
+
+[$] cd plutus
+[$] nix-shell
+[$] cd plutus-playground-client
+16 - Here we compile / build the frontend of the playground
+
+[$] npm run start
 
 Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/Mig29x/Cardano/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
 
